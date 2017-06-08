@@ -58,49 +58,36 @@
   <audio data-key="76" src="sounds/tink.wav"></audio>
 
 <script>
-
-  // jQuery equivalent:
-  // $('.key')
   const keys = document.querySelectorAll('.key');
+  keys.forEach(key => key.addEventListener('transitionend', removePlayingClass));
 
-  window.addEventListener('keydown', startPlay);
-
-  // transition end event
-  // can't listen on array, must loop over all
-  keys.forEach(key => key.addEventListener('transitionend', endPlay));
-
-  function startPlay(e) {
-    // jQuery equivalent:
-    // $('audio[data-key="' + e.keyCode + '}"]')
-    const audio = document.querySelector(`audio[data-key="${e.keyCode}"]`);
-    const key = document.querySelector(`div[data-key="${e.keyCode}"]`);
-
-    // stop function
-    if (!audio) {
-      return;
-    }
-
-    // rewind to beginning
-    audio.currentTime = 0;
-
-    audio.play();
-
-    // add animation
-    // jQuery equivalent:
-    // key.addClass('playing')
-    key.classList.add('playing');
-
-    // setTimeout tends to go out of sync
+  function removePlayingClass() {
+    this.classList.remove('playing');
   }
 
-  function endPlay(e) {
-    // skip if not transform
-    if (e.propertyName !== 'transform') {
-      return;
-    }
+  window.addEventListener('keydown', handleKeydown);
 
-    // remove playing class on end of transition
-    this.classList.remove('playing');
+  function handleKeydown(event) {
+    playSound(event.keyCode);
+    highlightKey(event.keyCode);
+  }
+
+  function highlightKey(keyCode) {
+    const key = document.querySelector(`div[data-key="${keyCode}"]`);
+
+    key.classList.add('playing');
+
+    // alternative to adding transitionend, but has magic number
+    // setTimeout(removePlayingClass.bind(key), 100);
+
+  }
+
+  function playSound(keyCode) {
+    const audio = document.querySelector(`audio[data-key="${keyCode}"]`);
+
+    // reloads audio before playing
+    audio.load();
+    audio.play();
   }
 
 </script>
