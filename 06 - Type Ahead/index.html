@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Type Ahead 👀</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <form class="search-form">
+    <input type="text" class="search" placeholder="City or State">
+    <ul class="suggestions">
+      <li>Filter for a city</li>
+      <li>or a state</li>
+    </ul>
+  </form>
+<script>
+  const endpoint = 'https://gist.githubusercontent.com/Miserlou/c5cd8364bf9b2420bb29/raw/2bf258763cdddd704f8ffd3ea9a3e81d25e2c6f6/cities.json';
+  const cities = [];
+  const suggestions = document.querySelector('.suggestions');
+  const initialSuggestions = suggestions.innerHTML;
+
+  fetch(endpoint)
+    .then(blob => blob.json())
+    .then(data => cities.push(...data));
+
+  function filterByText(text) {
+    const regex = new RegExp(text, 'gi');
+    const matches = cities.filter(data => {
+      return data.city.match(regex) || data.state.match(regex);
+    });
+
+    return matches;
+  }
+
+  function formatNumber(number) {
+    return number.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1,");
+  }
+
+  function toHtml(data) {
+    const regex = new RegExp(this.value, 'gi');
+    const cityHl = data.city.replace(regex, `<span class="hl">${this.value}</span>`);
+    const stateHl = data.state.replace(regex, `<span class="hl">${this.value}</span>`);
+    const populationFt = formatNumber(data.population);
+
+    return `
+      <li>
+      <span class="name">${cityHl}, ${stateHl}</span>
+      <span class="population">${populationFt}</span>
+      </li>
+    `;
+  }
+
+  function handleSearchChange() {
+    const text = this.value;
+
+    if (!text) {
+      suggestions.innerHTML = initialSuggestions;
+      return;
+    }
+
+    const jsonResult = filterByText(text);
+
+    const htmlResult = jsonResult
+      .map(toHtml.bind(this))
+      .join('');
+
+    suggestions.innerHTML = htmlResult;
+  }
+
+  const searchForm = document.querySelector('.search');
+
+  searchForm.addEventListener('change', handleSearchChange);
+  searchForm.addEventListener('keyup', handleSearchChange);
+
+
+</script>
+  </body>
+</html>
