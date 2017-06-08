@@ -12,6 +12,7 @@
         <div class="hand hour-hand"></div>
         <div class="hand min-hand"></div>
         <div class="hand second-hand"></div>
+        <div class="clock-center"></div>
       </div>
     </div>
 
@@ -56,50 +57,100 @@
       transform: translateY(-3px); /* account for the height of the clock hands */
     }
 
+    .clock-center {
+      top: calc(50%);
+      left: calc(50% - 4px);
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      position: relative;
+      background: tomato;
+    }
+
     .hand {
-      width:50%;
-      height:6px;
-      background:black;
+      width: 50%;
+      height: 6px;
+      background: white;
       position: absolute;
-      top:50%;
+      top: 50%;
+      transform-origin: right;
+    }
 
-      /* pivot point to center; default is 50% */
-      transform-origin: 100%;
-      transform: rotate(90deg);
+    .hour-hand {
+      width: 30%;
+      left: 20%;
+    }
 
-      /* seconds ticking */
-      transition: all 0.05s;
-      transition-timing-function: cubic-bezier(0, 2, 0.5, 1);
+    .second-hand {
+      background: tomato;
+      height: 2px;
+      width: 60%;
+      top: calc(50% + 2px);
+      /* 50% / 60% = 83.3% */
+      transform-origin: 83.3%;
+      transition: all 0.15s;
+      transition-timing-function: cubic-bezier(0, 2, 0.63, 0.76);
     }
 
   </style>
 
   <script>
-    const hourHand = document.querySelector('.hour-hand');
-    const minuteHand = document.querySelector('.min-hand');
-    const secondHand = document.querySelector('.second-hand');
 
-    function setDate () {
-      const now = new Date();
-      const hours = now.getHours();
-      const minutes = now.getMinutes();
-      const seconds = now.getSeconds();
-      const secondsDegrees = (seconds / 60) * 360 + 90;
-      const minutesDegrees = 
-        (minutes / 60) * 360 + 
-        secondsDegrees / 60 + 
-        90;
-      const hoursDegrees = 
-        (hours / 12) * 360 + 
-        minutesDegrees / 12 + 
-        90;
+    const topAngle = 90;
+    const fullcircle = 360;
+    const secRotation = fullcircle / 60;
+    const minRotation = fullcircle / 60;
+    const hourRotation = fullcircle / 12;
 
-      hourHand.style.transform = `rotate(${hoursDegrees}deg)`;
-      minuteHand.style.transform = `rotate(${minutesDegrees}deg)`;
-      secondHand.style.transform = `rotate(${secondsDegrees}deg)`;
+    let hourAngle = topAngle;
+    let minAngle = topAngle;
+    let secAngle = topAngle;
+
+    setNewTime();
+    const increment = setInterval(setNewTime, 1000);
+
+    function initializeTime() {
+      secAngle += secRotation * sec;
+      minAngle += minRotation * min;
+      hourAngle += hourRotation * hour;
+
+      updateClock();
     }
 
-    setInterval(setDate, 1000);
+    function setNewTime () {
+      const date = new Date();
+      const secs = date.getSeconds();
+      const mins = date.getMinutes();
+      const hours = date.getHours();
+
+      // offset of hands based on smaller increments
+      const minOffset = secs / 60;
+      const hourOffset = mins / 60 + secs / 360;
+
+      secAngle = topAngle + secRotation * secs;
+      minAngle = topAngle + minRotation * (mins + minOffset);
+      hourAngle = topAngle + hourRotation * (hours + hourOffset);
+
+      updateClock();
+    }
+
+    function updateClock () {
+      const secHand = document.querySelector('.second-hand');
+      const minHand = document.querySelector('.min-hand');
+      const hourHand = document.querySelector('.hour-hand');
+
+      // temporary adjustment of second hand to avoid jumping
+      if (secAngle == topAngle) {
+        secHand.style.transitionDuration = 'initial';
+        setTimeout(function() {
+          secHand.style.transitionDuration = '0.15s';
+        }, 500);
+      }
+
+      secHand.style.transform = `rotate(${secAngle}deg)`;
+      minHand.style.transform = `rotate(${minAngle}deg)`;
+      hourHand.style.transform = `rotate(${hourAngle}deg)`;
+    }
 
   </script>
 </body>
